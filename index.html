@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Snack Stock Tracker</title>
+<style>
+body { font-family: Arial; max-width: 600px; margin: 20px auto; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+#main { display: none; }
+#editor { display: none; margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; }
+input[type="number"] { width: 60px; }
+</style>
+</head>
+<body>
+
+<h1>Snack Stock Tracker</h1>
+
+<div id="login">
+  <label>Website Password:</label>
+  <input type="password" id="website-password">
+  <button id="website-submit">Submit</button>
+</div>
+
+<div id="main">
+  <div>
+    <label>Stock Passcode:</label>
+    <input type="password" id="stock-passcode">
+    <button id="stock-submit">Submit</button>
+  </div>
+
+  <div id="editor">
+    <h3>Manage Stock</h3>
+    <label>Item:</label>
+    <select id="item-select"></select>
+    <label>Quantity:</label>
+    <input type="number" id="quantity" min="1">
+    <br><br>
+    <button id="add-stock">Add Stock ➕</button>
+    <button id="log-sale">Log Sale ➖</button>
+  </div>
+
+  <table id="stock-table">
+    <tr><th>Item</th><th>Price</th><th>Stock</th></tr>
+  </table>
+</div>
+
+<script>
+const WEBSITE_PASSWORD = "09461";  // Website login
+const STOCK_PASSCODE = "187350";   // Stock edit access
+
+// Load or initialize stock
+let stock = JSON.parse(localStorage.getItem("stock")) || [
+  {name:"Welch’s Fruit Snacks", price:2, qty:40},
+  {name:"Rice Krispies Treats", price:2, qty:40},
+  {name:"Takis", price:2, qty:25}
+];
+
+let accessGranted = false;
+
+function saveStock(){ localStorage.setItem("stock", JSON.stringify(stock)); }
+
+function updateTable(){
+  const table=document.getElementById("stock-table");
+  const select=document.getElementById("item-select");
+  table.innerHTML='<tr><th>Item</th><th>Price</th><th>Stock</th></tr>';
+  select.innerHTML='';
+  stock.forEach(item=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${item.name}</td><td>$${item.price}</td><td>${item.qty}</td>`;
+    table.appendChild(tr);
+    const option=document.createElement("option");
+    option.value=item.name;
+    option.textContent=item.name;
+    select.appendChild(option);
+  });
+}
+
+// Website login
+document.getElementById("website-submit").onclick = function(){
+  const pw = document.getElementById("website-password").value;
+  if(pw === WEBSITE_PASSWORD){
+    document.getElementById("login").style.display = "none";
+    document.getElementById("main").style.display = "block";
+    alert("Website access granted ✅");
+  } else alert("Incorrect website password ❌");
+}
+
+// Stock passcode
+document.getElementById("stock-submit").onclick = function(){
+  const code = document.getElementById("stock-passcode").value;
+  if(code === STOCK_PASSCODE){
+    accessGranted = true;
+    document.getElementById("editor").style.display = "block";
+    alert("Stock access granted ✅");
+  } else alert("Incorrect stock passcode ❌");
+}
+
+// Add stock
+document.getElementById("add-stock").onclick = function(){
+  if(!accessGranted){ alert("Enter stock passcode first!"); return; }
+  const name = document.getElementById("item-select").value;
+  const qty = parseInt(document.getElementById("quantity").value);
+  if(isNaN(qty) || qty < 1){ alert("Enter a valid quantity!"); return; }
+  const item = stock.find(i=>i.name===name);
+  item.qty += qty;
+  updateTable();
+  saveStock();
+  alert(`Added ${qty} ${name} ✅`);
+  document.getElementById("quantity").value = '';
+}
+
+// Log sale
+document.getElementById("log-sale").onclick = function(){
+  if(!accessGranted){ alert("Enter stock passcode first!"); return; }
+  const name = document.getElementById("item-select").value;
+  const qty = parseInt(document.getElementById("quantity").value);
+  const item = stock.find(i=>i.name===name);
+  if(isNaN(qty) || qty < 1 || qty > item.qty){ alert("Invalid quantity or insufficient stock! ❌"); return; }
+  item.qty -= qty;
+  updateTable();
+  saveStock();
+  alert(`Sale logged: ${qty} ${name} ✅`);
+  document.getElementById("quantity").value = '';
+}
+
+updateTable();
+</script>
+
+</body>
+</html>
