@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Snack Stock Tracker</title>
+<style>
+  body { font-family: Arial; max-width: 600px; margin: 20px auto; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+  #main-section { display: none; }
+  #stock-editor { display: none; margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; }
+</style>
+</head>
+<body>
+
+<h1>Snack Stock Tracker</h1>
+
+<!-- Website login -->
+<div id="login-section">
+  <label>Enter Website Password: </label>
+  <input type="password" id="website-password-input">
+  <button id="website-password-submit">Submit</button>
+</div>
+
+<!-- Main app -->
+<div id="main-section">
+  <div>
+    <label>Enter Stock Passcode: </label>
+    <input type="password" id="passcode-input">
+    <button id="passcode-submit">Submit</button>
+  </div>
+
+  <!-- Stock management -->
+  <div id="stock-editor">
+    <h3>Edit Stock</h3>
+    <label>Item:</label>
+    <select id="edit-item-select"></select>
+    <label>Quantity:</label>
+    <input type="number" id="edit-quantity" min="1">
+    <br><br>
+    <button id="add-stock">➕ Add to Stock</button>
+    <button id="log-sale">➖ Log Sale</button>
+  </div>
+
+  <!-- Stock Table -->
+  <table id="stock-table">
+    <tr>
+      <th>Item</th>
+      <th>Price</th>
+      <th>Remaining Stock</th>
+    </tr>
+  </table>
+</div>
+
+<script>
+const WEBSITE_PASSWORD = "09461"; // Login password
+const STOCK_PASSCODE = "187350";  // Edit stock passcode
+let accessGranted = false;
+
+// Default stock list
+const DEFAULT_STOCK = [
+  {name: "Welch’s Fruit Snacks", price: 2, qty: 40},
+  {name: "Rice Krispies Treats", price: 2, qty: 40},
+  {name: "Takis", price: 2, qty: 25}
+];
+
+// Load stock from localStorage or use default
+let stock = JSON.parse(localStorage.getItem('stock')) || DEFAULT_STOCK;
+
+const loginSection = document.getElementById('login-section');
+const mainSection = document.getElementById('main-section');
+const stockEditor = document.getElementById('stock-editor');
+
+// Save to localStorage
+function saveStock() {
+  localStorage.setItem('stock', JSON.stringify(stock));
+}
+
+// Update stock display
+function updateTable() {
+  const table = document.getElementById('stock-table');
+  const editSelect = document.getElementById('edit-item-select');
+  table.innerHTML = '<tr><th>Item</th><th>Price</th><th>Remaining Stock</th></tr>';
+  editSelect.innerHTML = '';
+  stock.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${item.name}</td><td>$${item.price}</td><td>${item.qty}</td>`;
+    table.appendChild(tr);
+
+    const option = document.createElement('option');
+    option.value = item.name;
+    option.textContent = item.name;
+    editSelect.appendChild(option);
+  });
+}
+
+// WEBSITE LOGIN
+document.getElementById('website-password-submit').addEventListener('click', () => {
+  const code = document.getElementById('website-password-input').value;
+  if (code === WEBSITE_PASSWORD) {
+    loginSection.style.display = 'none';
+    mainSection.style.display = 'block';
+    alert("✅ Welcome! Enter the stock passcode to edit or log sales.");
+  } else {
+    alert("❌ Incorrect website password!");
+  }
+});
+
+// STOCK PASSCODE
+document.getElementById('passcode-submit').addEventListener('click', () => {
+  const code = document.getElementById('passcode-input').value;
+  if (code === STOCK_PASSCODE) {
+    accessGranted = true;
+    stockEditor.style.display = 'block';
+    alert("🔓 Access granted! You can now log sales or add stock.");
+  } else {
+    alert("❌ Incorrect stock passcode!");
+  }
+});
+
+// ADD STOCK
+document.getElementById('add-stock').addEventListener('click', () => {
+  if (!accessGranted) return alert("Access denied.");
+  const itemName = document.getElementById('edit-item-select').value;
+  const qty = parseInt(document.getElementById('edit-quantity').value);
+  if (!isNaN(qty) && qty > 0) {
+    const item = stock.find(i => i.name === itemName);
+    item.qty += qty;
+    updateTable();
+    saveStock();
+    alert(`✅ Added ${qty} ${itemName}.`);
+  } else {
+    alert("Enter a valid quantity to add.");
+  }
+  document.getElementById('edit-quantity').value = '';
+});
+
+// LOG SALE (subtract)
+document.getElementById('log-sale').addEventListener('click', () => {
+  if (!accessGranted) return alert("Access denied.");
+  const itemName = document.getElementById('edit-item-select').value;
+  const qty = parseInt(document.getElementById('edit-quantity').value);
+  const item = stock.find(i => i.name === itemName);
+  if (item && qty > 0 && qty <= item.qty) {
+    item.qty -= qty;
+    updateTable();
+    saveStock();
+    alert(`✅ Sale logged: ${qty} ${itemName}.`);
+  } else {
+    alert("❌ Invalid quantity or not enough stock.");
+  }
+  document.getElementById('edit-quantity').value = '';
+});
+
+updateTable();
+</script>
+
+</body>
+</html>
