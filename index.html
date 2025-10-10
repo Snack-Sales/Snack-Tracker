@@ -57,20 +57,28 @@
 </div>
 
 <script>
-let stock = [
+// Default stock
+const DEFAULT_STOCK = [
   {name: "Welch’s Fruit Snacks", price: 2, qty: 40},
   {name: "Rice Krispies Treats", price: 2, qty: 40},
   {name: "Takis", price: 2, qty: 25}
 ];
 
-const WEBSITE_PASSWORD = "Gators25"; // Updated website password
-const STOCK_PASSCODE = "187350";
+const WEBSITE_PASSWORD = "Gators25"; // website login
+const STOCK_PASSCODE = "187350";     // stock/sale access
 let accessGranted = false;
+
+// Load stock from localStorage or use default
+let stock = JSON.parse(localStorage.getItem('stock')) || DEFAULT_STOCK;
 
 const loginSection = document.getElementById('login-section');
 const mainSection = document.getElementById('main-section');
 const saleForm = document.getElementById('sale-form');
 saleForm.style.display = 'none'; // hidden until stock passcode is correct
+
+function saveStock() {
+  localStorage.setItem('stock', JSON.stringify(stock));
+}
 
 function updateTables() {
   const table = document.getElementById('stock-table');
@@ -132,6 +140,7 @@ document.getElementById('update-stock').addEventListener('click', () => {
     const item = stock.find(i => i.name === itemName);
     item.qty = newQty;
     updateTables();
+    saveStock();
     alert(`${itemName} stock updated to ${newQty}`);
   } else {
     alert("Invalid quantity!");
@@ -150,6 +159,7 @@ saleForm.addEventListener('submit', e => {
   if (item && qty <= item.qty) {
     item.qty -= qty;
     updateTables();
+    saveStock();
     alert(`Sale recorded: ${qty} ${itemName}`);
   } else {
     alert("Not enough stock!");
